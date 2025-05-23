@@ -1,8 +1,82 @@
-import React from 'react'
-import { ImageBackground, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
+import React, { useState } from 'react'
+import { Alert, FlatList, ImageBackground, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
 import { Ionicons } from '@expo/vector-icons';
+import ItemList from '../components/ItemList';
 
 export default function Home() {
+  const [textInput, setTextInput] = useState('');
+  const [items, setItems] = useState([]);
+
+  const addItem = () => {
+    if (textInput == '') {
+      Alert.alert(
+        'Ocorreu um problema :(',
+        'Por favor, informe o nome do produto!'
+      );
+    } else {
+      const newItem = {
+        id: Date.now().toString(),
+        name: textInput,
+        bought: false
+      }
+      setItems([...items, newItem]);
+      setTextInput('');
+    }
+  }
+
+  const markItemBought = itemId => {
+    const newItems = items.map((item) => {
+      if (item.id == itemId) {
+        return { ...item, bought: true}
+      }
+      return item;
+    });
+    setItems(newItems);
+  }
+
+  const unmarkItemBought = itemId => {
+    const newItems = items.map((item) => {
+      if (item.id == itemId) {
+        return { ...item, bought: false}
+      }
+      return item;
+    });
+    setItems(newItems);
+  }
+
+  const removeItem = itemId => {
+    Alert.alert(
+      'Excluir Produto?', 'Confirma a exclusão deste Produto?',
+      [
+        {
+          text: 'Sim', onPress: () => {
+            const newItems = items.filter(item => item.id != itemId)
+            setItems(newItems);
+          }
+        },
+        {
+          text: 'Cancelar', style: 'cancel'
+        }
+      ]
+    )
+  }
+
+  const removeAll = () => {
+    Alert.alert(
+      "Limpar Lista?", "Confirma a exclusão de todos os produtos?",
+      [
+        {
+          text: 'Sim',
+          onPress: () => { setItems([]) }
+        },
+        {
+          text: 'Cancelar',
+          style: 'cancel'
+        }
+      ]
+    )
+  }
+
   return (
     <SafeAreaView style={{ flex: 1}}>
       <ImageBackground 
@@ -12,16 +86,35 @@ export default function Home() {
       >
         <View style={styles.header}>
           <Text style={styles.title}>Lista de Produtos</Text>
-          <Ionicons name="trash" size={32} color="#fff" />
+          <Ionicons name="trash" size={32} color="#fff" onPress={removeAll} />
         </View>
 
-        <View style={{ flex: 1 }}></View>
+        <FlatList
+          contentContainerStyle={{ padding: 20, paddingBottom: 100, color:'#fff'}}
+          data={items}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={({ item }) =>
+            <ItemList
+              item={item}
+              markItem={markItemBought}
+              unmarkItem={unmarkItemBought}
+              removeItem={removeItem}
+            />
+          }
+        />
 
         <View style={styles.footer}>
           <View style={styles.inputContainer}>
-            <TextInput color="#fff" fontSize={18} />
+            <TextInput
+              color="#fff"
+              fontSize={18}
+              placeholder='Digite o nome do produto...'
+              placeholderTextColor='#aeaeae'
+              value={textInput}
+              onChangeText={(text) => setTextInput(text)}
+            />
           </View>
-          <TouchableOpacity style={styles.iconContainer} >
+          <TouchableOpacity style={styles.iconContainer} onPress={addItem}>
             <Ionicons name='add' size={36} color='#fff' />
           </TouchableOpacity>
         </View>
